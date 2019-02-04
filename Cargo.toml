@@ -1,0 +1,10 @@
+[package]
+name = "flashcard"
+version = "0.1.0"
+authors = ["Peter Farr <Peter@PrismaPhonic.com>"]
+edition = "2018"
+
+[dependencies]
+diesel = { version = "1.4.1", features = ["postgres"] }
+dotenv = "0.13.0"
+
