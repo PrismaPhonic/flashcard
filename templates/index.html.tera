@@ -1,4 +1,26 @@
 {% extends "base" %}
 {% block body %}
-<h1>Hello World</h1>
+<h1>{{ title }}</h1>
+<div class="container">
+{% for deck in decks %}
+
+  <a href="/deck/{{ deck.id }}" class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+  <div class="card-body">
+    <h4 class="card-title">{{ deck.title }}</h4>
+          <small>timestamp</small>
+    <p class="card-text">{{deck.author}}</p>
+
+  </div>
+</a>
+  {# <a href="#" class="list-group-item list-group-item-action flex-column align-items-start active">
+    <div class="d-flex w-100 justify-content-between">
+      <h3 class="mb-1">{{ deck.title }}</h3>
+
+      <small>timestamp</small>
+    </div>
+    <p class="mb-1">{{ deck.author }}</p>
+  </a> #}
+{% endfor %}
+</div>
+
 {% endblock body %}
