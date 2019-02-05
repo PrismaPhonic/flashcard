@@ -1,3 +1,4 @@
+use serde_derive::*;
 use super::schema::*;
 use std::time::SystemTime;
 
@@ -17,7 +18,7 @@ pub struct User {
     pub password: String,
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize, Deserialize, Debug)]
 pub struct Deck {
     pub id: i32,
     pub title: String,
