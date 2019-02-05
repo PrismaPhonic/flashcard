@@ -4,7 +4,6 @@ table! {
         question -> Text,
         answer -> Text,
         deck_id -> Int4,
-        user_id -> Int4,
     }
 }
 
@@ -13,6 +12,7 @@ table! {
         id -> Int4,
         title -> Text,
         created_at -> Timestamp,
+        user_id -> Int4,
     }
 }
 
@@ -25,7 +25,7 @@ table! {
 }
 
 joinable!(cards -> decks (deck_id));
-joinable!(cards -> users (user_id));
+joinable!(decks -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
     cards,

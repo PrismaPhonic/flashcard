@@ -8,7 +8,6 @@ pub struct Card {
     pub question: String,
     pub answer: String,
     pub deck_id: i32,
-    pub user_id: i32,
 }
 
 #[derive(Queryable)]
@@ -23,6 +22,7 @@ pub struct Deck {
     pub id: i32,
     pub title: String,
     pub created_at: SystemTime, 
+    pub user_id: i32,
 }
 
 #[derive(Insertable)]
@@ -31,7 +31,6 @@ pub struct NewCard<'a> {
     pub question: &'a str,
     pub answer: &'a str,
     pub deck_id: i32,
-    pub user_id: i32,
 }
 
 #[derive(Insertable)]
@@ -45,4 +44,5 @@ pub struct NewUser<'a> {
 #[table_name="decks"]
 pub struct NewDeck<'a> {
     pub title: &'a str,
+    pub user_id: i32,
 }
