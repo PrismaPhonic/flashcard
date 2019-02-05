@@ -12,20 +12,19 @@ table! {
         id -> Int4,
         title -> Text,
         created_at -> Timestamp,
-        user_id -> Int4,
+        author -> Text,
     }
 }
 
 table! {
-    users (id) {
-        id -> Int4,
+    users (username) {
         username -> Text,
         password -> Text,
     }
 }
 
 joinable!(cards -> decks (deck_id));
-joinable!(decks -> users (user_id));
+joinable!(decks -> users (author));
 
 allow_tables_to_appear_in_same_query!(
     cards,

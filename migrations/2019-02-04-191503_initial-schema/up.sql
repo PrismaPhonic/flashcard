@@ -1,7 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE users (
-  id serial PRIMARY KEY,
-  username text UNIQUE NOT NULL,
+  username text NOT NULL PRIMARY KEY,
   password text NOT NULL
 );
 
@@ -15,5 +14,5 @@ CREATE TABLE cards (
   question text NOT NULL,
   answer text NOT NULL,
   deck_id int NOT NULL REFERENCES decks(id), 
-  user_id int NOT NULL REFERENCES users(id)
+  author text NOT NULL REFERENCES users(username)
 );

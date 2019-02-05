@@ -22,7 +22,7 @@ pub struct Deck {
     pub id: i32,
     pub title: String,
     pub created_at: NaiveDateTime, 
-    pub user_id: i32,
+    pub author: String,
 }
 
 #[derive(Insertable)]
@@ -44,5 +44,5 @@ pub struct NewUser<'a> {
 #[table_name="decks"]
 pub struct NewDeck<'a> {
     pub title: &'a str,
-    pub user_id: i32,
+    pub author: &'a str,
 }

@@ -1,6 +1,6 @@
 -- This file should undo anything in `up.sql`
 ALTER TABLE cards
-ADD COLUMN user_id int NOT NULL REFERENCES users(id);
+ADD COLUMN author text NOT NULL REFERENCES users(username);
 
 ALTER TABLE decks
-DROP COLUMN user_id;
+DROP COLUMN author;
