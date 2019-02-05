@@ -5,12 +5,13 @@ authors = ["Peter Farr <Peter@PrismaPhonic.com>"]
 edition = "2018"
 
 [dependencies]
-diesel = { version = "1.4.1", features = ["postgres"] }
+diesel = { version = "1.4.1", features = ["postgres", "chrono"] }
 dotenv = "0.13.0"
 rocket = "0.4.0"
 tera = "0.11.20"
 serde = "1.0.87"
 serde_derive = "1.0.87"
+chrono = { version = "0.4.6", features = ["serde"] }
 
 [dependencies.rocket_contrib]
 version = "0.4.0"

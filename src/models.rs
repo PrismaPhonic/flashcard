@@ -1,6 +1,6 @@
 use serde_derive::*;
 use super::schema::*;
-use std::time::SystemTime;
+use chrono::naive::{ NaiveDate, NaiveDateTime };
 
 #[derive(Queryable)]
 pub struct Card {
@@ -21,7 +21,7 @@ pub struct User {
 pub struct Deck {
     pub id: i32,
     pub title: String,
-    pub created_at: SystemTime, 
+    pub created_at: NaiveDateTime, 
     pub user_id: i32,
 }
 
