@@ -3,20 +3,29 @@
 #[macro_use]
 extern crate serde;
 
-#[macro_use] extern crate serde_derive;
+#[macro_use]
+extern crate serde_derive;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[macro_use]
 extern crate tera;
 
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
-use std::collections::HashMap;
+use rocket_contrib::json::Json;
 use rocket_contrib::templates::Template;
+use std::collections::HashMap;
 
 use flashcard::models::Deck;
 use flashcard::*;
+
+#[derive(Serialize, Deserialize)]
+pub struct IncomingDeck {
+    pub title: String,
+    pub author: String,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct IndexPage {
@@ -26,10 +35,7 @@ struct IndexPage {
 
 impl IndexPage {
     fn new(title: String, decks: Vec<Deck>) -> IndexPage {
-        IndexPage {
-            title,
-            decks,
-        }
+        IndexPage { title, decks }
     }
 }
 
@@ -43,6 +49,25 @@ fn index() -> Template {
     Template::render("index", context)
 }
 
+#[get("/create")]
+fn create() -> Template {
+    let mut context = HashMap::new();
+
+    context.insert("title", "Create New Deck");
+
+    Template::render("create", context)
+}
+
+#[post("/deck", data = "<deck>")]
+fn deck(deck: Json<IncomingDeck>) {
+    let conn = establish_connection();
+
+    create_deck(&conn, &deck.0.title, &deck.0.author);
+}
+
 fn main() {
-    rocket::ignite().attach(Template::fairing()).mount("/", routes![index]).launch();
+    rocket::ignite()
+        .attach(Template::fairing())
+        .mount("/", routes![index, create, deck])
+        .launch();
 }

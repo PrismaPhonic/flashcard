@@ -7,7 +7,7 @@
   <div class="card-body">
     <h4 class="card-title">{{ deck.title }}</h4>
           <small>{{ deck.created_at | date(format="%Y-%m-%d %H:%M") }}</small>
-    <p class="card-text">{{deck.user_id}}</p>
+    <p class="card-text">{{deck.author}}</p>
   </div>
 </a>
 {% endfor %}
