@@ -8,11 +8,6 @@
       <input type="text" class="form-control" id="title"
       aria-describedby="title" placeholder="enter your title here">
     </div>
-    <div class="form-group">
-      <label for="author">Author</label>
-      <input type="text" class="form-control" id="author"
-      aria-describedby="author" placeholder="enter your author here">
-    </div>
     <button id="submitDeck" type="submit" class="btn btn-primary">Submit</button>
   </form>
 </div>
@@ -24,7 +19,8 @@ btn.onclick = (evt) => {
   evt.preventDefault();
 
   const title = document.getElementById("title").value.trim();
-  const author = document.getElementById("author").value.trim();
+  /* const author = document.getElementById("author").value.trim(); */
+  const author = `{{ author }}`;
 
   fetch("/deck", {
     method: "POST",

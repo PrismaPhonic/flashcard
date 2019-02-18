@@ -40,12 +40,13 @@ pub struct Signup {
 #[derive(Serialize, Deserialize, Debug)]
 struct IndexPage {
     title: String,
+    logged_in: bool,
     decks: Vec<Deck>,
 }
 
 impl IndexPage {
-    fn new(title: String, decks: Vec<Deck>) -> IndexPage {
-        IndexPage { title, decks }
+    fn new(title: String, logged_in: bool, decks: Vec<Deck>) -> IndexPage {
+        IndexPage { title, logged_in, decks }
     }
 }
 
@@ -64,13 +65,18 @@ impl<'a, 'r> FromRequest<'a, 'r> for Username {
 }
 
 #[get("/")]
-fn index() -> Template {
+fn index(user: Username) -> Template {
     let conn = establish_connection();
     let decks = get_all_decks(&conn);
 
-    let mut context = IndexPage::new("Home Page".to_string(), decks);
+    let mut context = IndexPage::new("Home Page".to_string(), true, decks);
 
     Template::render("index", context)
+}
+
+#[get("/", rank = 2)]
+fn index_redirect() -> Redirect {
+    Redirect::to(uri!(login))
 }
 
 #[get("/create")]
@@ -85,7 +91,7 @@ fn create(user: Username) -> Template {
 
 #[get("/create", rank = 2)]
 fn redirect_to_login() -> Redirect {
-    Redirect::to(uri!(signup))
+    Redirect::to(uri!(login))
 }
 
 #[get("/signup")]
@@ -94,7 +100,28 @@ fn signup() -> Template {
 
     context.insert("title", "Sign Up");
 
-    Template::render("signup", context)
+    Template::render("login-signup", context)
+}
+
+#[get("/login")]
+fn login() -> Template {
+    let mut context = HashMap::new();
+
+    context.insert("title", "Login");
+
+    Template::render("login-signup", context)
+}
+
+#[post("/login", data = "<user>")]
+fn handle_login(mut cookies: Cookies, user: Form<Signup>) -> Result<Redirect, Flash<Redirect>> {
+    let conn = establish_connection();
+
+    if validate_password(&conn, &user.username, &user.password) {
+        cookies.add_private(Cookie::new("username", user.username.to_string()));
+        Ok(Redirect::to(uri!(index)))
+    } else {
+        Err(Flash::error(Redirect::to(uri!(login)), "Invalid username/password."))
+    }
 }
 
 #[post("/signup", data = "<user>")]
@@ -116,6 +143,6 @@ fn deck(deck: Json<IncomingDeck>) {
 fn main() {
     rocket::ignite()
         .attach(Template::fairing())
-        .mount("/", routes![index, create, redirect_to_login, deck, signup, handle_signup])
+        .mount("/", routes![index, index_redirect, create, redirect_to_login, deck, login, handle_login, signup, handle_signup])
         .launch();
 }

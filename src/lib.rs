@@ -56,6 +56,16 @@ pub fn create_user<'a>(conn: &PgConnection, username: &'a str, password: &'a str
         .expect("Error saving new deck")
 }
 
+pub fn validate_password<'a>(conn: &PgConnection, u_name: &'a str, pass: &str) -> bool {
+    use self::schema::users::dsl::*;
+
+    let user: User = users.filter(username.eq(u_name))
+        .first(conn)
+        .expect("Could not find that user");
+
+    bcrypt::verify(pass, &user.password).unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
