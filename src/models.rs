@@ -10,9 +10,8 @@ pub struct Card {
     pub deck_id: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize, Deserialize, Debug)]
 pub struct User {
-    pub id: i32,
     pub username: String,
     pub password: String,
 }

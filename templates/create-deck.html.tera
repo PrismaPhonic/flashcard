@@ -1,0 +1,16 @@
+{% extends "base" %}
+{% block body %}
+<h1>{{ title }}</h1>
+<div class="container">
+{% for deck in decks %}
+  <a href="/deck/{{ deck.id }}" class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+  <div class="card-body">
+    <h4 class="card-title">{{ deck.title }}</h4>
+          <small>{{ deck.created_at | date(format="%Y-%m-%d %H:%M") }}</small>
+    <p class="card-text">{{deck.user_id}}</p>
+  </div>
+</a>
+{% endfor %}
+</div>
+
+{% endblock body %}

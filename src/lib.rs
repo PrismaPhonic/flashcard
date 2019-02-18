@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
+extern crate bcrypt;
 
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -35,6 +36,22 @@ pub fn create_deck<'a>(conn: &PgConnection, tle: &'a str, auth: &'a str) -> Deck
 
     diesel::insert_into(decks::table)
         .values(&new_deck)
+        .get_result(conn)
+        .expect("Error saving new deck")
+}
+
+pub fn create_user<'a>(conn: &PgConnection, username: &'a str, password: &'a str) -> User {
+    use self::schema::users;
+
+    let hashed_password = bcrypt::hash(password, 10).unwrap();
+
+    let new_user = NewUser {
+        username,
+        password: &hashed_password
+    };
+
+    diesel::insert_into(users::table)
+        .values(&new_user)
         .get_result(conn)
         .expect("Error saving new deck")
 }
