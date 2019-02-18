@@ -20,6 +20,7 @@ use rocket_contrib::templates::Template;
 use rocket::request::{self, Form, FlashMessage, FromRequest, Request};
 use rocket::response::{Redirect, Flash};
 use std::collections::HashMap;
+use std::path::PathBuf;
 use rocket::http::{Cookies, Cookie};
 
 use flashcard::models::{ Deck, User };
@@ -50,6 +51,13 @@ impl IndexPage {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct CreateContext<'a> {
+    title: &'static str,
+    author: &'a str,
+    logged_in: bool,
+}
+
 struct Username(String);
 
 impl<'a, 'r> FromRequest<'a, 'r> for Username {
@@ -64,35 +72,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Username {
     }
 }
 
-#[get("/")]
-fn index(user: Username) -> Template {
-    let conn = establish_connection();
-    let decks = get_all_decks(&conn);
 
-    let mut context = IndexPage::new("Home Page".to_string(), true, decks);
-
-    Template::render("index", context)
-}
-
-#[get("/", rank = 2)]
-fn index_redirect() -> Redirect {
-    Redirect::to(uri!(login))
-}
-
-#[get("/create")]
-fn create(user: Username) -> Template {
-    let mut context = HashMap::new();
-
-    context.insert("title", "Create New Deck");
-    context.insert("author", &user.0);
-
-    Template::render("create", &context)
-}
-
-#[get("/create", rank = 2)]
-fn redirect_to_login() -> Redirect {
-    Redirect::to(uri!(login))
-}
 
 #[get("/signup")]
 fn signup() -> Template {
@@ -138,6 +118,38 @@ fn deck(deck: Json<IncomingDeck>) {
     let conn = establish_connection();
 
     create_deck(&conn, &deck.0.title, &deck.0.author);
+}
+
+#[get("/")]
+fn index(user: Username) -> Template {
+    let conn = establish_connection();
+    let decks = get_all_decks(&conn);
+
+    let context = IndexPage::new("Home Page".to_string(), true, decks);
+
+    Template::render("index", context)
+}
+
+#[get("/", rank = 2)]
+fn index_redirect() -> Redirect {
+    Redirect::to(uri!(login))
+}
+
+#[get("/create")]
+fn create(user: Username) -> Template {
+
+    let context = CreateContext {
+        title: "Create New Deck",
+        author: &user.0,
+        logged_in: true,
+    };
+
+    Template::render("create", &context)
+}
+
+#[get("/<_path..>", rank = 2)]
+fn redirect_to_login(_path: PathBuf) -> Redirect {
+    Redirect::to(uri!(login))
 }
 
 fn main() {
