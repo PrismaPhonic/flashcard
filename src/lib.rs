@@ -1,7 +1,25 @@
+//! # Flashcard
+//!
+//! This crate provides a flashcard web application
+//!
+//! # Setup
+//!
+//! Make sure that you have the following in your `.env`:
+//!
+//! ```
+//! ROCKET_DATABASES={flashcard_db={url="postgres://username:password@localhost/flashcard"}}
+//! ```
+//!
+//! The most important part is that you don't change the `flashcard_db` text, as this is how rocket
+//! will identify which database to connect to when setting up a pool.  Feel free to point the url
+//! at any database managing your flashcards.
+//!
+//! Migrations will be run on rocket launch
+
 #[macro_use]
 extern crate diesel;
-extern crate dotenv;
 extern crate bcrypt;
+extern crate dotenv;
 
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -47,7 +65,7 @@ pub fn create_user<'a>(conn: &PgConnection, username: &'a str, password: &'a str
 
     let new_user = NewUser {
         username,
-        password: &hashed_password
+        password: &hashed_password,
     };
 
     diesel::insert_into(users::table)
@@ -59,7 +77,8 @@ pub fn create_user<'a>(conn: &PgConnection, username: &'a str, password: &'a str
 pub fn validate_password<'a>(conn: &PgConnection, u_name: &'a str, pass: &str) -> bool {
     use self::schema::users::dsl::*;
 
-    let user: User = users.filter(username.eq(u_name))
+    let user: User = users
+        .filter(username.eq(u_name))
         .first(conn)
         .expect("Could not find that user");
 

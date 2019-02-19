@@ -12,8 +12,6 @@ extern crate diesel_migrations;
 #[macro_use]
 extern crate log;
 
-use serde::{Deserialize, Serialize};
-
 #[macro_use]
 extern crate tera;
 
