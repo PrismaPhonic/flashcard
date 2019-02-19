@@ -6,7 +6,11 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-use serde::{Deserialize, Serialize};
+#[macro_use]
+extern crate diesel_migrations;
+
+#[macro_use]
+extern crate log;
 
 #[macro_use]
 extern crate tera;
@@ -14,17 +18,28 @@ extern crate tera;
 #[macro_use]
 extern crate rocket;
 
+#[macro_use]
+extern crate rocket_contrib;
+
+use dotenv::dotenv;
+use rocket::fairing::AdHoc;
+use rocket::http::{Cookie, Cookies};
 use rocket::outcome::IntoOutcome;
+use rocket::request::{self, FlashMessage, Form, FromRequest, Request};
+use rocket::response::{Flash, Redirect};
+use rocket_contrib::databases::diesel;
 use rocket_contrib::json::Json;
 use rocket_contrib::templates::Template;
-use rocket::request::{self, Form, FlashMessage, FromRequest, Request};
-use rocket::response::{Redirect, Flash};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use rocket::http::{Cookies, Cookie};
 
-use flashcard::models::{ Deck, User };
+use flashcard::models::{Deck, User};
 use flashcard::*;
+
+embed_migrations!("./migrations");
+
+#[database("flashcard_db")]
+struct FlashcardDB(diesel::PgConnection);
 
 #[derive(Serialize, Deserialize)]
 pub struct IncomingDeck {
@@ -47,7 +62,11 @@ struct IndexPage {
 
 impl IndexPage {
     fn new(title: String, logged_in: bool, decks: Vec<Deck>) -> IndexPage {
-        IndexPage { title, logged_in, decks }
+        IndexPage {
+            title,
+            logged_in,
+            decks,
+        }
     }
 }
 
@@ -64,15 +83,14 @@ impl<'a, 'r> FromRequest<'a, 'r> for Username {
     type Error = !;
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Username, !> {
-        request.cookies()
+        request
+            .cookies()
             .get_private("username")
             .and_then(|cookie| cookie.value().parse().ok())
             .map(|username| Username(username))
             .or_forward(())
     }
 }
-
-
 
 #[get("/signup")]
 fn signup() -> Template {
@@ -84,45 +102,64 @@ fn signup() -> Template {
 }
 
 #[get("/login")]
-fn login() -> Template {
+fn login_user(_user: Username) -> Redirect {
+    Redirect::to(uri!(index))
+}
+
+#[get("/login", rank = 2)]
+fn login(flash: Option<FlashMessage>) -> Template {
     let mut context = HashMap::new();
 
     context.insert("title", "Login");
+
+    if let Some(ref msg) = flash {
+        context.insert("flash", msg.msg());
+    }
 
     Template::render("login-signup", context)
 }
 
 #[post("/login", data = "<user>")]
-fn handle_login(mut cookies: Cookies, user: Form<Signup>) -> Result<Redirect, Flash<Redirect>> {
-    let conn = establish_connection();
-
+fn handle_login(
+    conn: FlashcardDB,
+    mut cookies: Cookies,
+    user: Form<Signup>,
+) -> Result<Redirect, Flash<Redirect>> {
     if validate_password(&conn, &user.username, &user.password) {
         cookies.add_private(Cookie::new("username", user.username.to_string()));
         Ok(Redirect::to(uri!(index)))
     } else {
-        Err(Flash::error(Redirect::to(uri!(login)), "Invalid username/password."))
+        Err(Flash::error(
+            Redirect::to(uri!(login)),
+            "Invalid username/password.",
+        ))
     }
 }
 
-#[post("/signup", data = "<user>")]
-fn handle_signup(mut cookies: Cookies, user: Form<Signup>) -> Result<Redirect, Flash<Redirect>> {
-    let conn = establish_connection();
+#[post("/logout")]
+fn logout(mut cookies: Cookies) -> Flash<Redirect> {
+    cookies.remove_private(Cookie::named("username"));
+    Flash::success(Redirect::to(uri!(login)), "Successfully logged out.")
+}
 
+#[post("/signup", data = "<user>")]
+fn handle_signup(
+    conn: FlashcardDB,
+    mut cookies: Cookies,
+    user: Form<Signup>,
+) -> Result<Redirect, Flash<Redirect>> {
     let new_user = create_user(&conn, &user.username, &user.password);
     cookies.add_private(Cookie::new("username", new_user.username));
     Ok(Redirect::to(uri!(index)))
 }
 
 #[post("/deck", data = "<deck>")]
-fn deck(deck: Json<IncomingDeck>) {
-    let conn = establish_connection();
-
+fn deck(conn: FlashcardDB, deck: Json<IncomingDeck>) {
     create_deck(&conn, &deck.0.title, &deck.0.author);
 }
 
 #[get("/")]
-fn index(user: Username) -> Template {
-    let conn = establish_connection();
+fn index(conn: FlashcardDB, user: Username) -> Template {
     let decks = get_all_decks(&conn);
 
     let context = IndexPage::new("Home Page".to_string(), true, decks);
@@ -137,7 +174,6 @@ fn index_redirect() -> Redirect {
 
 #[get("/create")]
 fn create(user: Username) -> Template {
-
     let context = CreateContext {
         title: "Create New Deck",
         author: &user.0,
@@ -147,14 +183,46 @@ fn create(user: Username) -> Template {
     Template::render("create", &context)
 }
 
-#[get("/<_path..>", rank = 2)]
+#[get("/<_path..>", rank = 3)]
 fn redirect_to_login(_path: PathBuf) -> Redirect {
     Redirect::to(uri!(login))
 }
 
-fn main() {
+fn rocket() -> rocket::Rocket {
+    dotenv().ok();
+
     rocket::ignite()
         .attach(Template::fairing())
-        .mount("/", routes![index, index_redirect, create, redirect_to_login, deck, login, handle_login, signup, handle_signup])
-        .launch();
+        .attach(FlashcardDB::fairing())
+        .attach(AdHoc::on_attach("Run Main Database Migrations", |rocket| {
+            let conn = FlashcardDB::get_one(&rocket).expect("database connection");
+
+            match embedded_migrations::run(&*conn) {
+                Ok(()) => Ok(rocket),
+                Err(e) => {
+                    error!("Failed to run database migrations: {:?}", e);
+                    Err(rocket)
+                }
+            }
+        }))
+        .mount(
+            "/",
+            routes![
+                index,
+                index_redirect,
+                create,
+                redirect_to_login,
+                deck,
+                login,
+                logout,
+                login_user,
+                handle_login,
+                signup,
+                handle_signup
+            ],
+        )
+}
+
+fn main() {
+    rocket().launch();
 }
