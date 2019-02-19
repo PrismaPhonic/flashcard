@@ -107,6 +107,18 @@
   font-size: 12px;
   color: #777;
 }
+
+.link-button {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  cursor: pointer;
+  text-decoration: none;
+}
+.link-button:focus {
+  outline: none;
+  color: #fff;
+}
 </style>
 
   </head>
@@ -135,6 +147,13 @@
             </li>
             <li class="nav-item"><a class="nav-link" href="#">My Decks</a></li>
             <li class="nav-item"><a class="nav-link" href="/create">Create</a></li>
+            <form action="/logout" method="post" accept-charset="utf-8">
+              <li class="nav-item">
+                <input type="hidden" name="logout"
+                value="logout" />
+                <button class="nav-link link-button" type="submit">Logout</button> 
+              </li>
+            </form>
           {% else %}
             <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
             <li class="nav-item"><a class="nav-link" href="/signup">Signup</a></li>
