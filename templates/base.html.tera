@@ -146,7 +146,7 @@
               >
             </li>
             <li class="nav-item"><a class="nav-link" href="#">My Decks</a></li>
-            <li class="nav-item"><a class="nav-link" href="/create">Create</a></li>
+            <li class="nav-item"><a class="nav-link" href="/deck">Create</a></li>
             <form action="/logout" method="post" accept-charset="utf-8">
               <li class="nav-item">
                 <input type="hidden" name="logout"

@@ -2,40 +2,14 @@
 {% block body %}
 <h1>{{ title }}</h1>
 <div class="container">
-  <form>
+  <form method="post">
     <div class="form-group">
       <label for="title">Title</label>
       <input type="text" class="form-control" id="title"
-      aria-describedby="title" placeholder="enter your title here">
+      aria-describedby="title" name="title" placeholder="enter your title here">
     </div>
     <button id="submitDeck" type="submit" class="btn btn-primary">Submit</button>
   </form>
 </div>
-<script>
-
-const btn = document.getElementById("submitDeck");
-
-btn.onclick = (evt) => {
-  evt.preventDefault();
-
-  const title = document.getElementById("title").value.trim();
-  /* const author = document.getElementById("author").value.trim(); */
-  const author = `{{ author }}`;
-
-  fetch("/deck", {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8", },
-    body: JSON.stringify({ title, author }),
-  }).then(function(e) {
-    console.log(JSON.stringify({title, author}));
-    if (!e.ok) {
-      alert(
-      	`Your deck could not be created
-	try refreshing the page, or use a different browser.`
-      )
-    }
-  });
-}
-
 </script>
 {% endblock body %}

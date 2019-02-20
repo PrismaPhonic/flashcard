@@ -41,10 +41,9 @@ embed_migrations!("./migrations");
 #[database("flashcard_db")]
 struct FlashcardDB(diesel::PgConnection);
 
-#[derive(Serialize, Deserialize)]
+#[derive(FromForm)]
 pub struct IncomingDeck {
     pub title: String,
-    pub author: String,
 }
 
 #[derive(FromForm)]
@@ -154,8 +153,9 @@ fn handle_signup(
 }
 
 #[post("/deck", data = "<deck>")]
-fn deck(conn: FlashcardDB, deck: Json<IncomingDeck>) {
-    create_deck(&conn, &deck.0.title, &deck.0.author);
+fn deck(conn: FlashcardDB, user: Username, mut cookies: Cookies, deck: Form<IncomingDeck>) -> Result<Redirect, Flash<Redirect>> {
+    create_deck(&conn, &deck.title, &user.0);
+    Ok(Redirect::to(uri!(index)))
 }
 
 #[get("/")]
@@ -172,7 +172,7 @@ fn index_redirect() -> Redirect {
     Redirect::to(uri!(login))
 }
 
-#[get("/create")]
+#[get("/deck")]
 fn create(user: Username) -> Template {
     let context = CreateContext {
         title: "Create New Deck",
