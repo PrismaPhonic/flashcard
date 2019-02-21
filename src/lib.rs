@@ -21,6 +21,15 @@ extern crate diesel;
 extern crate bcrypt;
 extern crate dotenv;
 
+#[macro_use]
+extern crate serde;
+
+#[macro_use]
+extern crate serde_derive;
+
+#[macro_use]
+extern crate rocket;
+
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenv::dotenv;
@@ -28,8 +37,11 @@ use std::env;
 
 pub mod models;
 pub mod schema;
+pub mod contexts;
+pub mod forms;
 
 use crate::models::*;
+use crate::contexts::*;
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
