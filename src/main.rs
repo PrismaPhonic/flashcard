@@ -1,12 +1,6 @@
 #![feature(proc_macro_hygiene, decl_macro, never_type)]
 
 #[macro_use]
-extern crate serde;
-
-#[macro_use]
-extern crate serde_derive;
-
-#[macro_use]
 extern crate diesel_migrations;
 
 #[macro_use]
@@ -34,47 +28,14 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use flashcard::models::{Deck, User};
+use flashcard::contexts::*;
+use flashcard::forms::*;
 use flashcard::*;
 
 embed_migrations!("./migrations");
 
 #[database("flashcard_db")]
 struct FlashcardDB(diesel::PgConnection);
-
-#[derive(FromForm)]
-pub struct IncomingDeck {
-    pub title: String,
-}
-
-#[derive(FromForm)]
-pub struct Signup {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct IndexPage {
-    title: String,
-    logged_in: bool,
-    decks: Vec<Deck>,
-}
-
-impl IndexPage {
-    fn new(title: String, logged_in: bool, decks: Vec<Deck>) -> IndexPage {
-        IndexPage {
-            title,
-            logged_in,
-            decks,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct CreateContext<'a> {
-    title: &'static str,
-    author: &'a str,
-    logged_in: bool,
-}
 
 struct Username(String);
 
@@ -162,7 +123,11 @@ fn deck(conn: FlashcardDB, user: Username, mut cookies: Cookies, deck: Form<Inco
 fn index(conn: FlashcardDB, user: Username) -> Template {
     let decks = get_all_decks(&conn);
 
-    let context = IndexPage::new("Home Page".to_string(), true, decks);
+    let context = IndexContext {
+        title: "Home Page".to_string(), 
+        logged_in: true, 
+        decks,
+    };
 
     Template::render("index", context)
 }
@@ -174,7 +139,7 @@ fn index_redirect() -> Redirect {
 
 #[get("/deck")]
 fn create(user: Username) -> Template {
-    let context = CreateContext {
+    let context = DeckContext {
         title: "Create New Deck",
         author: &user.0,
         logged_in: true,
