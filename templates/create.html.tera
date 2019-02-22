@@ -1,15 +1,22 @@
 {% extends "base" %}
 {% block body %}
-<h1>{{ title }}</h1>
-<div class="container">
-  <form method="post">
-    <div class="form-group">
-      <label for="title">Title</label>
-      <input type="text" class="form-control" id="title"
-      aria-describedby="title" name="title" placeholder="enter your title here">
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+        <div class="card card-signin my-5">
+          <div class="card-body">
+            <h5 class="card-title text-center">{{ title }}</h5>
+            <form class="form-signin" method="POST">
+              <div class="form-label-group">
+                <input type="text" id="title" name="title" class="form-control"
+		placeholder="Enter your title here." required autofocus>
+              </div>
+              <button class="btn btn-lg btn-primary btn-block text-uppercase"
+	      type="submit">Submit</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-    <button id="submitDeck" type="submit" class="btn btn-primary">Submit</button>
-  </form>
-</div>
-</script>
+  </div>
 {% endblock body %}
