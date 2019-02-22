@@ -1,16 +1,21 @@
 {% extends "base" %}
 {% block body %}
-<h1>{{ title }}</h1>
+<h1 class="text-center my-5 text-white">{{ title }}</h1>
 <div class="container">
 {% for deck in decks %}
-  <a href="/deck/{{ deck.id }}" class="card text-white bg-primary mb-3" style="max-width: 20rem;">
-  <div class="card-body">
-    <h4 class="card-title">{{ deck.title }}</h4>
-          <small>{{ deck.created_at | date(format="%Y-%m-%d %H:%M") }}</small>
-    <p class="card-text">{{deck.author}}</p>
+  <div class ="row">
+    <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+      <a href="/deck/{{ deck.id }}" class="card card-signin deck-card mb-3" style="max-width: 20rem;">
+        <div class="card-body">
+          <h4 class="card-title text-center">{{ deck.title }}</h4>
+          <p class="card-text text-center">{{deck.author}}</p>
+          <p class="card-text text-center">
+	  <small class="text-center">{{ deck.created_at | date(format="%Y-%m-%d %H:%M")
+	  }}</small></p>
+        </div>
+      </a>
+    </div>
   </div>
-</a>
 {% endfor %}
 </div>
-
 {% endblock body %}
