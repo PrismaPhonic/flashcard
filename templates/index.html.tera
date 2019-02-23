@@ -5,11 +5,10 @@
 {% for deck in decks %}
   <div class ="row">
     <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
-      <form action="/deck/{{ deck.id }}/delete" method="post">
-        <button type="submit" class="close">&times;</button>
-      </form>
       <a href="/deck/{{ deck.id }}" class="card card-signin deck-card mb-3" style="max-width: 20rem;">
-
+        <form action="/deck/{{ deck.id }}/delete" method="post">
+          <button type="submit" class="close mt-3 mr-3">&times;</button>
+        </form>
         <div class="card-body">
           <h4 class="card-title text-center">{{ deck.title }}</h4>
           <p class="card-text text-center">{{deck.author}}</p>

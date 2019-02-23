@@ -1,0 +1,16 @@
+{% extends "base" %}
+{% block body %}
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+        <div class="card card-signin my-5">
+          <div class="card-body">
+            <h5 class="card-title text-center">{{ error }}</h5>
+            <p class="card-title text-center">{{ direct_msg }} <a href="{{ uri
+	    }}">{{ uri_title }}</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock body %}

@@ -19,6 +19,8 @@ use dotenv::dotenv;
 use rocket::fairing::AdHoc;
 use rocket::http::{Cookie, Cookies};
 use rocket::outcome::IntoOutcome;
+use rocket::http::Status;
+use rocket::response::status;
 use rocket::request::{self, FlashMessage, Form, FromRequest, Request};
 use rocket::response::{Flash, Redirect};
 use rocket_contrib::databases::diesel;
@@ -149,10 +151,41 @@ fn deck_form(user: Username) -> Template {
 }
 
 #[post("/deck/<id>/delete")]
-fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Redirect {
-    delete_deck(&conn, id).unwrap();
+fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Result<Redirect, Status> {
+    if let Ok(deck) = get_one_deck(&conn, id) {
+        if deck.author == user.0 {
+            delete_deck(&conn, id).unwrap();
+        } else {
+            return Err(Status::Unauthorized);
+        }
+    }
 
-    Redirect::to(uri!(index))
+    Ok(Redirect::to(uri!(index)))
+}
+
+/**
+ * Error Catchers
+ */
+
+// Note - Right now the uri references where we just came from which is invalid
+// this works if it was a POST because the link will go to a non-existent GET
+// and hit our catch all redirect anyways - but not what we want.  
+//
+// See if there's a way to check two back and redirect there
+#[catch(401)]
+fn unauthorized(req: &Request) -> Template {
+    let mut context = HashMap::new();
+
+    context.insert("error", "You are not authorized!");
+    context.insert("logged_in", "true");
+
+    let uri = req.uri().to_string();
+
+    context.insert("direct_msg", "Go back: ");
+    context.insert("uri", &uri);
+    context.insert("uri_title", "Previous Page");
+
+    Template::render("error", &context)
 }
 
 #[get("/<_path..>", rank = 3)]
@@ -194,6 +227,7 @@ fn rocket() -> rocket::Rocket {
                 handle_signup
             ],
         )
+        .register(catchers![unauthorized])
 }
 
 fn main() {
