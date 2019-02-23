@@ -114,13 +114,13 @@ fn handle_signup(
 }
 
 #[post("/deck", data = "<deck>")]
-fn deck(conn: FlashcardDB, user: Username, mut cookies: Cookies, deck: Form<IncomingDeck>) -> Result<Redirect, Flash<Redirect>> {
+fn deck(conn: FlashcardDB, user: Username, deck: Form<IncomingDeck>) -> Result<Redirect, Flash<Redirect>> {
     create_deck(&conn, &deck.title, &user.0);
     Ok(Redirect::to(uri!(index)))
 }
 
 #[get("/")]
-fn index(conn: FlashcardDB, user: Username) -> Template {
+fn index(conn: FlashcardDB, _user: Username) -> Template {
     let decks = get_all_decks(&conn);
 
     let context = IndexContext {
@@ -138,7 +138,7 @@ fn index_redirect() -> Redirect {
 }
 
 #[get("/deck")]
-fn create(user: Username) -> Template {
+fn deck_form(user: Username) -> Template {
     let context = DeckContext {
         title: "Create New Deck",
         author: &user.0,
@@ -146,6 +146,13 @@ fn create(user: Username) -> Template {
     };
 
     Template::render("create", &context)
+}
+
+#[post("/deck/<id>/delete")]
+fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Redirect {
+    delete_deck(&conn, id).unwrap();
+
+    Redirect::to(uri!(index))
 }
 
 #[get("/<_path..>", rank = 3)]
@@ -175,9 +182,10 @@ fn rocket() -> rocket::Rocket {
             routes![
                 index,
                 index_redirect,
-                create,
+                deck_form,
                 redirect_to_login,
                 deck,
+                handle_delete_deck,
                 login,
                 logout,
                 login_user,

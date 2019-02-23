@@ -56,6 +56,13 @@ pub fn get_all_decks(conn: &PgConnection) -> Vec<Deck> {
     decks.load::<Deck>(conn).expect("Error loading decks")
 }
 
+pub fn get_one_deck(conn: &PgConnection, deck_id: i32) -> Result<Deck, diesel::result::Error> {
+    use self::schema::decks::dsl::*;
+
+    decks.find(deck_id)
+        .first(conn)
+}
+
 pub fn create_deck<'a>(conn: &PgConnection, tle: &'a str, auth: &'a str) -> Deck {
     use self::schema::decks;
 
@@ -68,6 +75,18 @@ pub fn create_deck<'a>(conn: &PgConnection, tle: &'a str, auth: &'a str) -> Deck
         .values(&new_deck)
         .get_result(conn)
         .expect("Error saving new deck")
+}
+
+pub fn delete_deck(conn: &PgConnection, deck_id: i32) -> Result<usize, diesel::result::Error> {
+    use self::schema::decks::dsl::*;
+
+    diesel::delete(decks.filter(id.eq(deck_id))).execute(conn)
+}
+
+pub fn delete_user<'a>(conn: &PgConnection, user: &'a str) -> Result<usize, diesel::result::Error> {
+    use self::schema::users::dsl::*;
+
+    diesel::delete(users.filter(username.eq(user))).execute(conn)
 }
 
 pub fn create_user<'a>(conn: &PgConnection, username: &'a str, password: &'a str) -> User {
@@ -99,8 +118,22 @@ pub fn validate_password<'a>(conn: &PgConnection, u_name: &'a str, pass: &str) -
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn test_decks_model() {
+        use super::schema::decks::dsl::*;
+
+        let conn = establish_connection();
+        
+        let user1 = create_user(&conn, "hackerman", "hackerman");
+        let deck1 = create_deck(&conn, "Test title", "hackerman");
+
+        assert_eq!(Ok(deck1.id), decks.find(deck1.id).select(id).first(&conn));
+
+        delete_deck(&conn, deck1.id);
+        delete_user(&conn, &user1.username);
+
+        assert_ne!(Ok(deck1.id), decks.find(deck1.id).select(id).first(&conn));
     }
 }
