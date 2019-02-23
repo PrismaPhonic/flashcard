@@ -19,6 +19,8 @@ use dotenv::dotenv;
 use rocket::fairing::AdHoc;
 use rocket::http::{Cookie, Cookies};
 use rocket::outcome::IntoOutcome;
+use rocket::http::Status;
+use rocket::response::status;
 use rocket::request::{self, FlashMessage, Form, FromRequest, Request};
 use rocket::response::{Flash, Redirect};
 use rocket_contrib::databases::diesel;
@@ -149,10 +151,16 @@ fn deck_form(user: Username) -> Template {
 }
 
 #[post("/deck/<id>/delete")]
-fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Redirect {
-    delete_deck(&conn, id).unwrap();
+fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Result<Redirect, status::Custom<&'static str>> {
+    if let Ok(deck) = get_one_deck(&conn, id) {
+        if deck.author == user.0 {
+            delete_deck(&conn, id).unwrap();
+        } else {
+            return Err(status::Custom(Status::Unauthorized, "You are not that deck's author!"));
+        }
+    }
 
-    Redirect::to(uri!(index))
+    Ok(Redirect::to(uri!(index)))
 }
 
 #[get("/<_path..>", rank = 3)]
