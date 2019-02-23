@@ -70,6 +70,12 @@ pub fn create_deck<'a>(conn: &PgConnection, tle: &'a str, auth: &'a str) -> Deck
         .expect("Error saving new deck")
 }
 
+pub fn delete_deck(conn: &PgConnection, id: i32) -> Result<usize, diesel::result::Error> {
+    use self::schema::decks::dsl::*;
+
+    diesel::delete(decks.find(id)).execute(conn)
+}
+
 pub fn create_user<'a>(conn: &PgConnection, username: &'a str, password: &'a str) -> User {
     use self::schema::users;
 
