@@ -148,7 +148,7 @@ fn deck_form(user: Username) -> Template {
     Template::render("create", &context)
 }
 
-#[delete("/deck/<id>")]
+#[post("/deck/<id>/delete")]
 fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Redirect {
     delete_deck(&conn, id).unwrap();
 
@@ -185,6 +185,7 @@ fn rocket() -> rocket::Rocket {
                 deck_form,
                 redirect_to_login,
                 deck,
+                handle_delete_deck,
                 login,
                 logout,
                 login_user,
