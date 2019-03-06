@@ -15,6 +15,7 @@ chrono = { version = "0.4.6", features = ["serde"] }
 bcrypt = "0.3.0"
 diesel_migrations = "1.4.0"
 log = "0.4.6"
+jsonwebtoken = "5.0.1"
 
 [dependencies.rocket_contrib]
 version = "0.4.0"
