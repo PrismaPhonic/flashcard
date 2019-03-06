@@ -13,6 +13,7 @@ table! {
         title -> Text,
         created_at -> Timestamp,
         author -> Text,
+        published -> Bool,
     }
 }
 

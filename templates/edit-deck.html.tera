@@ -1,0 +1,107 @@
+{% extends "base" %}
+{% block body %}
+<h1>{{ title }}</h1>
+<div class="container">
+  <a href="/deck/{{ id }}" class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+  <div class="card-body">
+    <h4 class="card-title">{{ title }}</h4>
+          <small>{{ created_at | date(format="%Y-%m-%d %H:%M") }}</small>
+    <p class="card-text">{{ author }}</p>
+  </div>
+</a>
+</div>
+<div id="fields">
+  <div class="row">
+    <div class="col-6">
+      <div class="form-label-group">
+        <input type="text" class="form-control question" placeholder="Enter your question here." required autofocus>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="form-label-group">
+        <input type="text" class="form-control answer" placeholder="Enter your answer here." required autofocus>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6">
+      <div class="form-label-group">
+        <input type="text" class="form-control question" placeholder="Enter your question here." required autofocus>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="form-label-group">
+        <input type="text" class="form-control answer" placeholder="Enter your answer here." required autofocus>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6">
+      <div class="form-label-group">
+        <input type="text" class="form-control question" placeholder="Enter your question here." required autofocus>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="form-label-group">
+        <input type="text" class="form-control answer" placeholder="Enter your answer here." required autofocus>
+      </div>
+    </div>
+  </div>
+</div>
+<button class="btn btn-lg btn-primary btn-block text-uppercase" id="add-field" type="Button">+</button>
+<button class="btn btn-lg btn-primary btn-block text-uppercase" id="submit-button" type="submit">Submit</button>
+
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+
+<script>
+  $(document).ready(function() {
+    $("#add-field").on("click", function() {
+    let $card = $(`<div class="row">
+      <div class="col-6">
+        <div class="form-label-group">
+          <input type="text" id="question3" class="form-control question" placeholder="Enter your question here." required autofocus>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-label-group">
+          <input type="text" class="form-control answer" placeholder="Enter your answer here." required autofocus>
+        </div>
+      </div>`);
+      $card.appendTo("#fields");
+    });
+
+    $("#submit-button").on("click", function() {
+      let $questions = $(".question");
+      let $answers = $(".answer");
+
+      let cards = [];
+
+      for(let i = 0; i < $questions.length; i++) {
+        let card = {};
+        card.question = $questions[i].value;
+        card.answer = $answers[i].value;
+
+        cards[i] = card;
+      }
+      
+      let data = {
+        author: "{{author}}",
+        deck_id: "{{id}}",
+        cards,
+      }
+      $.ajax({
+        url: "/cards",
+        type: "POST",
+        data,
+        success: function() {console.log("Greatest Success!")},
+      })
+    });
+  });
+
+
+
+</script>
+{% endblock body %}

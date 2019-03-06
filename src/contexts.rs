@@ -8,8 +8,16 @@ pub struct IndexContext {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct CreateDeckContext<'a> {
+    pub title: &'static str,
+    pub author: &'a str,
+    pub logged_in: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DeckContext<'a> {
     pub title: &'static str,
     pub author: &'a str,
     pub logged_in: bool,
 }
+
