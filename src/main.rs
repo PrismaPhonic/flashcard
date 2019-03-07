@@ -185,23 +185,22 @@ fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Result<Redi
     Ok(Redirect::to(uri!(index)))
 }
 
-#[derive(Deserialize, Debug)]
-struct DeckData {
-    author: String,
-    deck_id: i32,
-    cards: Vec<NewCard>,
-}
-
-#[derive(Deserialize, Debug)]
-struct NewCard {
-    question: String,
-    answer: String,
-}
 
 #[post("/cards", data="<deck>")]
 fn handle_add_cards(conn: FlashcardDB, deck: Json<DeckData>) {
     println!("recieved this data {:?}", deck);
+
+    // verify deck by that id exists - if so unpack it
+    if let Ok(_) = get_one_deck(&conn, deck.deck_id) {
+        // fix this
+        if deck.author == deck.author {
+        // loop through and add each card to that deck by FK
+            add_cards_to_deck(&conn, deck.deck_id, &deck.cards);
+        }
+    }
 }
+
+
 
 /**
  * Error Catchers

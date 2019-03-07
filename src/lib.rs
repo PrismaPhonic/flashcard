@@ -43,6 +43,19 @@ pub mod forms;
 use crate::models::*;
 use crate::contexts::*;
 
+#[derive(Deserialize, Debug)]
+pub struct DeckData {
+    pub author: String,
+    pub deck_id: i32,
+    pub cards: Vec<NewCardJSON>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NewCardJSON {
+    pub question: String,
+    pub answer: String,
+}
+
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
 
@@ -103,6 +116,29 @@ pub fn create_user<'a>(conn: &PgConnection, username: &'a str, password: &'a str
         .values(&new_user)
         .get_result(conn)
         .expect("Error saving new deck")
+}
+
+pub fn add_cards_to_deck(conn: &PgConnection, deck_id: i32, cards: &Vec<NewCardJSON>) {
+    for card in cards {
+        let NewCardJSON { question, answer } = card;
+        create_card(conn, &question, &answer, deck_id);
+    }
+}
+
+
+pub fn create_card<'a>(conn: &PgConnection, question: &'a str, answer: &'a str, deck_id: i32) -> Card {
+    use self::schema::cards;
+
+    let new_card = NewCard {
+        question,
+        answer,
+        deck_id
+    };
+
+    diesel::insert_into(cards::table)
+        .values(&new_card)
+        .get_result(conn)
+        .expect("Error saving new card")
 }
 
 pub fn validate_password<'a>(conn: &PgConnection, u_name: &'a str, pass: &str) -> bool {
