@@ -1,12 +1,12 @@
 {% extends "base" %}
 {% block body %}
-<h1>{{ title }}</h1>
+<h1>{{ deck.title }}</h1>
 <div class="container">
-  <a href="/deck/{{ id }}" class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+  <a href="/deck/{{ deck.id }}" class="card text-white bg-primary mb-3" style="max-width: 20rem;">
   <div class="card-body">
-    <h4 class="card-title">{{ title }}</h4>
-          <small>{{ created_at | date(format="%Y-%m-%d %H:%M") }}</small>
-    <p class="card-text">{{ author }}</p>
+    <h4 class="card-title">{{ deck.title }}</h4>
+          <small>{{ deck.created_at | date(format="%Y-%m-%d %H:%M") }}</small>
+    <p class="card-text">{{ deck.author }}</p>
   </div>
 </a>
 </div>
@@ -84,9 +84,10 @@
       }
       
       let data = JSON.stringify({
-        author: "{{author}}",
-        deck_id: {{id}},
+        author: "{{ deck.author }}",
+        deck_id: {{ deck.id }},
         cards,
+	jwt: "{{ jwt }}",
       });
 
       $.ajax({

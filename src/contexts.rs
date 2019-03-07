@@ -15,9 +15,9 @@ pub struct CreateDeckContext<'a> {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct DeckContext<'a> {
-    pub title: &'static str,
-    pub author: &'a str,
+pub struct DeckContext {
+    pub deck: Deck,
+    pub jwt: String,
     pub logged_in: bool,
 }
 

@@ -164,7 +164,15 @@ fn deck_form(user: Username) -> Template {
 fn deck_details(conn: FlashcardDB, id: i32, user: Username) -> Result<Template, Redirect> {
     if let Ok(deck) = get_one_deck(&conn, id) {
         if deck.author == user.0 {
-            return Ok(Template::render("edit-deck", &deck));
+            let jwt = create_token(user.0);
+
+            let context = DeckContext {
+                deck,
+                jwt,
+                logged_in: true,
+            };
+
+            return Ok(Template::render("edit-deck", &context));
         } else {
             return Ok(Template::render("deck-details", &deck));
         }
@@ -188,12 +196,14 @@ fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Result<Redi
 
 #[post("/cards", data="<deck>")]
 fn handle_add_cards(conn: FlashcardDB, deck: Json<DeckData>) {
-    println!("recieved this data {:?}", deck);
+
+    let jwt = &deck.jwt;
+    let payload = decode_payload(jwt);
 
     // verify deck by that id exists - if so unpack it
     if let Ok(_) = get_one_deck(&conn, deck.deck_id) {
         // fix this
-        if deck.author == deck.author {
+        if deck.author == payload.username {
         // loop through and add each card to that deck by FK
             add_cards_to_deck(&conn, deck.deck_id, &deck.cards);
         }
