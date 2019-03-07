@@ -22,6 +22,7 @@ pub struct Deck {
     pub title: String,
     pub created_at: NaiveDateTime, 
     pub author: String,
+    pub published: bool,
 }
 
 #[derive(Insertable)]

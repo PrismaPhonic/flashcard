@@ -15,13 +15,19 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
 
+#[macro_use] 
+extern crate serde;
+
+#[macro_use] 
+extern crate serde_derive;
+
 use dotenv::dotenv;
 use rocket::fairing::AdHoc;
+use rocket::http::Status;
 use rocket::http::{Cookie, Cookies};
 use rocket::outcome::IntoOutcome;
-use rocket::http::Status;
-use rocket::response::status;
 use rocket::request::{self, FlashMessage, Form, FromRequest, Request};
+use rocket::response::status;
 use rocket::response::{Flash, Redirect};
 use rocket_contrib::databases::diesel;
 use rocket_contrib::json::Json;
@@ -29,9 +35,9 @@ use rocket_contrib::templates::Template;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use flashcard::models::{Deck, User};
 use flashcard::contexts::*;
 use flashcard::forms::*;
+use flashcard::models::{Deck, User};
 use flashcard::*;
 
 embed_migrations!("./migrations");
@@ -116,7 +122,11 @@ fn handle_signup(
 }
 
 #[post("/deck", data = "<deck>")]
-fn deck(conn: FlashcardDB, user: Username, deck: Form<IncomingDeck>) -> Result<Redirect, Flash<Redirect>> {
+fn deck(
+    conn: FlashcardDB,
+    user: Username,
+    deck: Form<IncomingDeck>,
+) -> Result<Redirect, Flash<Redirect>> {
     create_deck(&conn, &deck.title, &user.0);
     Ok(Redirect::to(uri!(index)))
 }
@@ -126,8 +136,8 @@ fn index(conn: FlashcardDB, _user: Username) -> Template {
     let decks = get_all_decks(&conn);
 
     let context = IndexContext {
-        title: "Home Page".to_string(), 
-        logged_in: true, 
+        title: "Home Page".to_string(),
+        logged_in: true,
         decks,
     };
 
@@ -141,13 +151,33 @@ fn index_redirect() -> Redirect {
 
 #[get("/deck")]
 fn deck_form(user: Username) -> Template {
-    let context = DeckContext {
+    let context = CreateDeckContext {
         title: "Create New Deck",
         author: &user.0,
         logged_in: true,
     };
 
     Template::render("create", &context)
+}
+
+#[get("/deck/<id>")]
+fn deck_details(conn: FlashcardDB, id: i32, user: Username) -> Result<Template, Redirect> {
+    if let Ok(deck) = get_one_deck(&conn, id) {
+        if deck.author == user.0 {
+            let jwt = create_token(user.0);
+
+            let context = DeckContext {
+                deck,
+                jwt,
+                logged_in: true,
+            };
+
+            return Ok(Template::render("edit-deck", &context));
+        } else {
+            return Ok(Template::render("deck-details", &deck));
+        }
+    }
+    Err(Redirect::to(uri!(index)))
 }
 
 #[post("/deck/<id>/delete")]
@@ -163,13 +193,32 @@ fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Result<Redi
     Ok(Redirect::to(uri!(index)))
 }
 
+
+#[post("/cards", data="<deck>")]
+fn handle_add_cards(conn: FlashcardDB, deck: Json<DeckData>) {
+
+    let jwt = &deck.jwt;
+    let payload = decode_payload(jwt);
+
+    // verify deck by that id exists - if so unpack it
+    if let Ok(_) = get_one_deck(&conn, deck.deck_id) {
+        // fix this
+        if deck.author == payload.username {
+        // loop through and add each card to that deck by FK
+            add_cards_to_deck(&conn, deck.deck_id, &deck.cards);
+        }
+    }
+}
+
+
+
 /**
  * Error Catchers
  */
 
 // Note - Right now the uri references where we just came from which is invalid
 // this works if it was a POST because the link will go to a non-existent GET
-// and hit our catch all redirect anyways - but not what we want.  
+// and hit our catch all redirect anyways - but not what we want.
 //
 // See if there's a way to check two back and redirect there
 #[catch(401)]
@@ -224,7 +273,9 @@ fn rocket() -> rocket::Rocket {
                 login_user,
                 handle_login,
                 signup,
-                handle_signup
+                handle_signup,
+                deck_details,
+                handle_add_cards,
             ],
         )
         .register(catchers![unauthorized])

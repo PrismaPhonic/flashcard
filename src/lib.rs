@@ -34,6 +34,8 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenv::dotenv;
 use std::env;
+use jsonwebtoken::{encode, decode, Algorithm, Header, Validation};
+use chrono::Utc;
 
 pub mod models;
 pub mod schema;
@@ -42,6 +44,27 @@ pub mod forms;
 
 use crate::models::*;
 use crate::contexts::*;
+
+#[derive(Deserialize, Debug)]
+pub struct DeckData {
+    pub author: String,
+    pub deck_id: i32,
+    pub cards: Vec<NewCardJSON>,
+    pub jwt: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NewCardJSON {
+    pub question: String,
+    pub answer: String,
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Payload {
+   pub username: String,
+   pub exp: i64,
+}
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
@@ -105,6 +128,29 @@ pub fn create_user<'a>(conn: &PgConnection, username: &'a str, password: &'a str
         .expect("Error saving new deck")
 }
 
+pub fn add_cards_to_deck(conn: &PgConnection, deck_id: i32, cards: &Vec<NewCardJSON>) {
+    for card in cards {
+        let NewCardJSON { question, answer } = card;
+        create_card(conn, &question, &answer, deck_id);
+    }
+}
+
+
+pub fn create_card<'a>(conn: &PgConnection, question: &'a str, answer: &'a str, deck_id: i32) -> Card {
+    use self::schema::cards;
+
+    let new_card = NewCard {
+        question,
+        answer,
+        deck_id
+    };
+
+    diesel::insert_into(cards::table)
+        .values(&new_card)
+        .get_result(conn)
+        .expect("Error saving new card")
+}
+
 pub fn validate_password<'a>(conn: &PgConnection, u_name: &'a str, pass: &str) -> bool {
     use self::schema::users::dsl::*;
 
@@ -114,6 +160,22 @@ pub fn validate_password<'a>(conn: &PgConnection, u_name: &'a str, pass: &str) -
         .expect("Could not find that user");
 
     bcrypt::verify(pass, &user.password).unwrap()
+}
+
+pub fn create_token(username: String) -> String {
+
+    // set timeout on JWT to 30 minutes (1800 seconds) after you get it
+    let new_payload = Payload {
+        username,
+        exp: Utc::now().timestamp() + 1800,
+    };
+
+    encode(&Header::default(), &new_payload, "testkey".as_ref()).unwrap()
+}
+
+pub fn decode_payload(token: &str) -> Payload {
+    let token_data = decode::<Payload>(token, b"testkey", &Validation::default()).unwrap();
+    token_data.claims
 }
 
 #[cfg(test)]
