@@ -15,6 +15,12 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
 
+#[macro_use] 
+extern crate serde;
+
+#[macro_use] 
+extern crate serde_derive;
+
 use dotenv::dotenv;
 use rocket::fairing::AdHoc;
 use rocket::http::Status;
@@ -179,6 +185,24 @@ fn handle_delete_deck(conn: FlashcardDB, id: i32, user: Username) -> Result<Redi
     Ok(Redirect::to(uri!(index)))
 }
 
+#[derive(Deserialize, Debug)]
+struct DeckData {
+    author: String,
+    deck_id: i32,
+    cards: Vec<NewCard>,
+}
+
+#[derive(Deserialize, Debug)]
+struct NewCard {
+    question: String,
+    answer: String,
+}
+
+#[post("/cards", data="<deck>")]
+fn handle_add_cards(conn: FlashcardDB, deck: Json<DeckData>) {
+    println!("recieved this data {:?}", deck);
+}
+
 /**
  * Error Catchers
  */
@@ -242,6 +266,7 @@ fn rocket() -> rocket::Rocket {
                 signup,
                 handle_signup,
                 deck_details,
+                handle_add_cards,
             ],
         )
         .register(catchers![unauthorized])

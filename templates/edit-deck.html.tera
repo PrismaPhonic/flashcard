@@ -51,10 +51,6 @@
 <button class="btn btn-lg btn-primary btn-block text-uppercase" id="add-field" type="Button">+</button>
 <button class="btn btn-lg btn-primary btn-block text-uppercase" id="submit-button" type="submit">Submit</button>
 
-<script
-  src="https://code.jquery.com/jquery-3.3.1.min.js"
-  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-  crossorigin="anonymous"></script>
 
 <script>
   $(document).ready(function() {
@@ -87,11 +83,12 @@
         cards[i] = card;
       }
       
-      let data = {
+      let data = JSON.stringify({
         author: "{{author}}",
-        deck_id: "{{id}}",
+        deck_id: {{id}},
         cards,
-      }
+      });
+
       $.ajax({
         url: "/cards",
         type: "POST",
